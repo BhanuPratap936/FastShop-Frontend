@@ -1,12 +1,24 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import Header from "../components/Header"
 import { IoIosArrowForward } from "react-icons/io"
 import Footer from "../components/Footer"
 
 const Cart = () => {
 
+    const navigate = useNavigate()
     const cart_products = [1, 2]
     const outOfStockProduct = [1, 2]
+
+    const redirect = () => {
+        navigate('/shipping', {
+            state: {
+                products: [],
+                price: 500,
+                shipping_fee: 45,
+                items: 2
+            }
+        })
+    }
 
     return (
         <div>
@@ -205,7 +217,7 @@ const Cart = () => {
                                                 </span>
                                             </div>
 
-                                            <button className="px-5 py-[6px] rounded-sm hover:shadow-red-500/50
+                                            <button onClick={redirect} className="px-5 py-[6px] rounded-sm hover:shadow-red-500/50
                                             hover:shadow-lg bg-red-500 text-sm text-white uppercase">
                                                 Proceed to Checkout
                                             </button>
