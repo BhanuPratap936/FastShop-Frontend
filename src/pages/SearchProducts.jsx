@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import Header from "../components/Header"
 import { IoIosArrowForward } from "react-icons/io"
 import Footer from "../components/Footer"
@@ -17,7 +17,7 @@ import { price_range_product, query_products } from "../store/reducers/homeReduc
 
 
 
-const Shops = () => {
+const SearchProducts = () => {
 
     // const [filter, setFilter] = useState(true)
     // const categories = [
@@ -30,6 +30,15 @@ const Shops = () => {
     //     'Home Decor',
     //     'Smart Watches',
     // ]
+
+    const [searchParams, setSearchParams] = useSearchParams()
+    const category = searchParams.get('category')
+    // console.log(category);
+    const searchValue = searchParams.get('value')
+    console.log(searchValue);
+    
+
+    
 
     const dispatch = useDispatch()
     const {products, categories, priceRange, latest_product, totalProduct, perPage} = useSelector(state => state.home)
@@ -48,7 +57,7 @@ const Shops = () => {
     const [pageNumber, setPageNumber] = useState(1)
 
     const [sortPrice, setSortPrice] = useState('')
-    const [category, setCategory] = useState('')
+    // const [category, setCategory] = useState('')
 
     useEffect(() => {
         dispatch(price_range_product())
@@ -60,24 +69,18 @@ const Shops = () => {
         })
     }, [priceRange])
 
-    const queryCategory = (e, value) => {
-        if (e.target.checked) {
-            setCategory(value)
-        } else {
-            setCategory('')
-        }
-    }
-
+   
     useEffect(() => {
         dispatch(query_products({
-            low: state.values[0],
-            high: state.values[1],
+            low: state.values[0] || '',
+            high: state.values[1] || '',
             category,
             rating,
             sortPrice,
-            pageNumber
+            pageNumber,
+            searchValue
         }))
-    }, [state.values[0], state.values[1], category, rating, sortPrice, pageNumber])
+    }, [state.values[0], state.values[1], category, rating, sortPrice, searchValue, pageNumber])
 
     const resetRating = () => {
         setRating('')
@@ -89,6 +92,7 @@ const Shops = () => {
                 rating: '',
                 sortPrice,
                 pageNumber
+                
             })
         )
     }
@@ -103,14 +107,14 @@ const Shops = () => {
                         <div className="flex flex-col justify-center gap-1 items-center
                     h-full w-full text-white">
                             <h2 className="text-3xl font-bold">
-                                Shop Page
+                                Category Page
                             </h2>
                             <div className="flex justify-center items-center gap-2 text-2xl w-full">
                                 <Link to='/'>Home</Link>
                                 <span className="pt-1">
                                     <IoIosArrowForward />
                                 </span>
-                                <span>Shop</span>
+                                <span>Category</span>
                             </div>
 
                         </div>
@@ -131,11 +135,11 @@ const Shops = () => {
 
                     <div className="w-full flex flex-wrap">
                         <div className={`w-3/12 md-lg:w-4/12 md:w-full pr-8 ${filter ? 'md:h-0 md:overflow-hidden md:mb-6' : 'md:h-auto md:overflow-auto md:mb-0'}`}>
-                            <h2 className="text-3xl font-bold mb-3 text-slate-600">
+                            {/* <h2 className="text-3xl font-bold mb-3 text-slate-600">
                                 Category
-                            </h2>
+                            </h2> */}
 
-                            <div className="py-2">
+                            {/* <div className="py-2">
                                 {
                                     categories.map((c, i) => <div key={i} className="flex justify-start items-center gap-2 py-1">
                                         <input checked={category === c.name ? true : false}
@@ -146,7 +150,7 @@ const Shops = () => {
 
                                     </div>)
                                 }
-                            </div>
+                            </div> */}
 
                             <div className="py-2 flex flex-col gap-5">
                                 <h2 className="text-3xl font-bold mb-3 text-slate-600">
@@ -300,4 +304,4 @@ const Shops = () => {
     )
 }
 
-export default Shops
+export default SearchProducts

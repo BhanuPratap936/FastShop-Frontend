@@ -1,19 +1,22 @@
 import Carousel from "react-multi-carousel";
 import { Link } from "react-router-dom";
 import 'react-multi-carousel/lib/styles.css'
+import { useSelector } from "react-redux";
 
 const Categories = () => {
 
-    const categories = [
-        'Mobiles',
-        'Laptops',
-        'Speakers',
-        'Top wear',
-        'Footwear',
-        'Watches',
-        'Home Decor',
-        'Smart Watches',
-    ]
+    const {categories} = useSelector(state => state.home)
+
+    // const categories = [
+    //     'Mobiles',
+    //     'Laptops',
+    //     'Speakers',
+    //     'Top wear',
+    //     'Footwear',
+    //     'Watches',
+    //     'Home Decor',
+    //     'Smart Watches',
+    // ]
 
     const responsive = {
         superLargeDesktop: {
@@ -63,14 +66,14 @@ const Categories = () => {
                 transitionDuration={500}
             >
                 {
-                    categories.map((c, i) => <Link className="h-[185px] border block" key={i} to="#">
+                    categories.map((c, i) => <Link className="h-[185px] border block" key={i} to={`/products?category=${c.name}`}>
                         <div className="w-full h-full relative p-3">
-                            <img src={`http://localhost:3000/images/products/${i+1}.webp`} alt="product-image" />
+                            <img src={c.image} alt="product-image" />
 
                             <div className="absolute bottom-6 w-full mx-auto font-bold left-0 flex justify-center
                             items-center">
                                 <span className="py-[2px] px-6 bg-[#3330305d] text-white">
-                                    {c}
+                                    {c.name}
                                 </span>
                             </div>
                         </div>

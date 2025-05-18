@@ -4,30 +4,40 @@ import { FaCartShopping, FaXTwitter } from "react-icons/fa6"
 import { IoIosArrowDown, IoMdArrowDropdown } from "react-icons/io"
 import { IoCall } from "react-icons/io5"
 import { MdEmail } from "react-icons/md"
-import { Link, useLocation } from "react-router-dom"
+import { useSelector } from "react-redux"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 
 const Header = () => {
+
+    const {categories} = useSelector(state => state.home)
 
     const { pathname } = useLocation()
     console.log(pathname);
 
-    const user = true
+    const navigate = useNavigate()
+
+    const {userInfo} = useSelector(state => state.auth)
     const [showSidebar, setShowSidebar] = useState(true)
     const [categoryShow, setCategoryShow] = useState(true)
     const wishlist_count = 3
-    const categories = [
-        'Mobiles',
-        'Laptops',
-        'Speakers',
-        'Top wear',
-        'Footwear',
-        'Watches',
-        'Home Decor',
-        'Smart Watches',
-    ]
+    // const categories = [
+    //     'Mobiles',
+    //     'Laptops',
+    //     'Speakers',
+    //     'Top wear',
+    //     'Footwear',
+    //     'Watches',
+    //     'Home Decor',
+    //     'Smart Watches',
+    // ]
 
     const [searchValue, setSearchValue] = useState('')
     const [category, setCategory] = useState('')
+
+
+    const search = () => {
+        navigate(`/products/search?category=${category}&&value=${searchValue}`)
+    }
     return (
         <div className="w-full bg-white">
             <div className="header-top bg-[#caddff] md-lg:hidden">
@@ -74,10 +84,10 @@ const Header = () => {
                                 </div>
 
                                 {
-                                    user ? <Link className="flex cursor-pointer justify-center items-center gap-2
+                                    userInfo ? <Link className="flex cursor-pointer justify-center items-center gap-2
                                     text-sm text-black" to='/dashboard'>
                                         <span><FaUser /></span>
-                                        <span>Bhanu Pratap</span>
+                                        <span>{userInfo.name}</span>
                                     </Link> : <Link className="flex cursor-pointer justify-center items-center gap-2
                                     text-sm text-black" to='/login'>
                                         <span><FaLock /></span>
@@ -211,10 +221,10 @@ const Header = () => {
                                     </ul>
                                 </div>
                                 {
-                                    user ? <Link className="flex cursor-pointer justify-center items-center gap-2
+                                    userInfo ? <Link className="flex cursor-pointer justify-center items-center gap-2
                                     text-sm text-black" to='/dashboard'>
                                         <span><FaUser /></span>
-                                        <span>Bhanu Pratap</span>
+                                        <span>{userInfo.name}</span>
                                     </Link> : <Link className="flex cursor-pointer justify-center items-center gap-2
                                     text-sm text-black" to='/login'>
                                         <span><FaLock /></span>
@@ -312,7 +322,9 @@ const Header = () => {
                                         categories.map((c, i) => {
                                             return (
                                                 <li key={i} className="flex justify-start items-center gap-2 px-[24px] py-[6px]">
-                                                    <Link className="text-sm">{c}</Link>
+
+                                                    <img src={c.image} className="w-[30px] h-[30px] rounded-full overflow-hidden" alt="categories" />
+                                                    <Link to={`/products?category=${c.name}`} className="text-sm block">{c.name}</Link>
                                                 </li>
                                             )
                                         })
@@ -334,17 +346,17 @@ const Header = () => {
                                                 <option value="">Select Category</option>
                                                 {
                                                     categories.map((c, i) => 
-                                                    <option value={c}>
-                                                        {c}
+                                                    <option key={i} value={c.name}>
+                                                        {c.name}
                                                     </option>)
                                                 }
                                              </select>
                                         </div>
 
-                                        <input className="w-full relative bg-transparent text-slate-500 outline-0 px-3 h-full"
-                                        onChange={(e) => setSearchValue(e.target.value)} type="text" name="" id="" placeholder="What do you need?" />
+                                        <input value={searchValue} className="w-full relative bg-transparent text-slate-500 outline-0 px-3 h-full"
+                                        onChange={(e) => setSearchValue(e.target.value)}  type="text" name="" id="" placeholder="What do you need?" />
 
-                                        <button className="bg-[#059473] right-0 absolute px-8 h-full font-semibold uppercase text-white">
+                                        <button onClick={search} className="bg-[#059473] right-0 absolute px-8 h-full font-semibold uppercase text-white">
                                             Search
                                         </button>
                                     </div>
