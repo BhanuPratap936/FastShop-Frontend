@@ -10,6 +10,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 const Header = () => {
 
     const {categories} = useSelector(state => state.home)
+    const {cart_product_count, wishlist_count} = useSelector(state => state.cart)
 
     const { pathname } = useLocation()
     console.log(pathname);
@@ -19,7 +20,7 @@ const Header = () => {
     const {userInfo} = useSelector(state => state.auth)
     const [showSidebar, setShowSidebar] = useState(true)
     const [categoryShow, setCategoryShow] = useState(true)
-    const wishlist_count = 3
+    // const wishlist_count = 3
     // const categories = [
     //     'Mobiles',
     //     'Laptops',
@@ -38,6 +39,15 @@ const Header = () => {
     const search = () => {
         navigate(`/products/search?category=${category}&&value=${searchValue}`)
     }
+
+    const redirect_cart_page = () => {
+        if (userInfo) {
+            navigate('/cart')
+        } else {
+            navigate('/login')
+        }
+    }
+
     return (
         <div className="w-full bg-white">
             <div className="header-top bg-[#caddff] md-lg:hidden">
@@ -162,25 +172,30 @@ const Header = () => {
                                             <span className="text-xl text-green-500">
                                                 <FaHeart />
                                             </span>
-                                            <div className="w-[20px] h-[20px] absolute bg-red-500 rounded-full text-white
+                                           {
+                                                wishlist_count !== 0 && <div className="w-[20px] h-[20px] absolute bg-red-500 rounded-full text-white
                                             flex justify-center items-center -top-[3px] -right-[5px]">
                                                 {
                                                     wishlist_count
                                                 }
                                             </div>
+                                           } 
                                         </div>
 
-                                        <div className="relative flex justify-center items-center cursor-pointer
+                                        <div onClick={redirect_cart_page} className="relative flex justify-center items-center cursor-pointer
                                         w-[35px] h-[35px] rounded-full bg-[#e2e2e2]">
                                             <span className="text-xl text-green-500">
                                                 <FaCartShopping />
                                             </span>
+                                            {
+                                                cart_product_count !== 0 &&
                                             <div className="w-[20px] h-[20px] absolute bg-red-500 rounded-full text-white
                                             flex justify-center items-center -top-[3px] -right-[5px]">
                                                 {
-                                                    wishlist_count
+                                                    cart_product_count
                                                 }
                                             </div>
+                                            }
                                         </div>
                                     </div>
                                 </div>

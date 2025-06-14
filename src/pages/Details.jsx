@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import Header from "../components/Header"
 import { IoIosArrowForward } from "react-icons/io"
 import Footer from "../components/Footer"
 import Carousel from "react-multi-carousel"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Rating from '../components/Rating'
 import { FaFacebookF, FaHeart, FaInstagram, FaRedditAlien } from "react-icons/fa"
 import { MdIosShare } from "react-icons/md"
@@ -13,8 +13,35 @@ import { Pagination } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import { Swiper, SwiperSlide } from 'swiper/react'
+import { useDispatch, useSelector } from "react-redux"
+import { product_details } from "../store/reducers/homeReducer"
+import toast from "react-hot-toast"
+import { add_to_cart, add_to_wishlist, messageClear } from "../store/reducers/cartReducer"
 
 const Details = () => {
+
+    const navigate = useNavigate()
+    const {slug} = useParams()
+    const dispatch = useDispatch()
+
+    useEffect(() => {
+        dispatch(product_details(slug))
+    }, [slug])
+
+    const {product, relatedProducts, moreProducts} = useSelector(state => state.home)
+    const {userInfo} = useSelector(state => state.auth)
+    const {errorMessage, successMessage} = useSelector(state => state.cart)
+
+    useEffect(() => {
+        if (successMessage) {
+            toast.success(successMessage)
+            dispatch(messageClear())
+        }
+        if (errorMessage) {
+            toast.error(errorMessage)
+            dispatch(messageClear())
+        }
+    }, [successMessage, errorMessage])
 
     const images = [1, 2, 3, 4, 5, 6]
     const [image, setImage] = useState('')
@@ -47,6 +74,83 @@ const Details = () => {
             breakpoint: { max: 440, min: 0 },
             items: 1
         },
+    }
+
+    const [quantity, setQuantity] = useState(1)
+
+    const inc = () => {
+        if (quantity >= product.stock) {
+            toast.error('Out of Stock')
+        } else {
+            setQuantity(quantity + 1)
+        }
+    }
+
+    const dec = () => {
+        if (quantity > 1) {
+            setQuantity(quantity - 1)
+        }
+    }
+
+    const add_cart = () => {
+        if (userInfo) {
+            dispatch(add_to_cart({
+                userId: userInfo.id,
+                quantity,
+                productId: product._id
+            }))
+        } else {
+            navigate('/login')
+        }
+    }
+
+    const add_wishlist = () => {
+        if (userInfo) {
+            dispatch(add_to_wishlist({
+                userId: userInfo.id,
+                productId: product._id,
+                name: product.name,
+                price: product.price,
+                image: product.images[0],
+                discount: product.discount,
+                rating: product.rating,
+                slug: product.slug
+            }))
+        } else {
+            navigate('/login')
+        }
+    }
+
+    const buynow = () => {
+        let price = 0;
+        if (product.discount !== 0) {
+            price = product.price - Math.floor((product.price * product.discount) / 100)
+        } else {
+            price = product.price
+        }
+
+        const obj = [
+            {
+                sellerId: product.sellerId,
+                shopName: product.shopName,
+                price: quantity * price,
+                products: [
+                    {
+                        quantity,
+                        productInfo: product
+                    }
+                ]
+            }
+        ]
+
+        navigate('/shipping', {
+            state: {
+                products: obj,
+                price: price * quantity,
+                shipping_fee: 50,
+                items: quantity
+            }
+        })
     }
 
     return (
@@ -86,40 +190,40 @@ const Details = () => {
                             </Link>
                             <span className="pt-1"><IoIosArrowForward /></span>
                             <Link to='/'>
-                                Categories
+                                {product.category}
                             </Link>
                             <span className="pt-1"><IoIosArrowForward /></span>
-                            <span>Product Name</span>
+                            <span>{product.name}</span>
                         </div>
                     </div>
                 </div>
             </section>
 
             <section>
-                <div className="w-[85%] md:w-[80%] sm:w-[90%] lg:w-[90%] h-full mx-auto mb-4">
+                <div className="w-[85%] md:w-[80%] sm:w-[90%] lg:w-[90%] h-full mx-auto pb-16">
                     <div className="grid grid-cols-2 md-lg:grid-cols-1 gap-8">
                         <div>
                             <div className="p-5 border">
                                 <img className="h-[400px] w-full"
-                                    src={image ? `http://localhost:3000/images/products/${image}.webp` :
-                                        `http://localhost:3000/images/products/${images[2]}.webp`} alt="pictures" />
+                                    src={image ? image :
+                                        product.images?.[0]} alt="pictures" />
 
                             </div>
 
                             <div className="py-3">
                                 {
-                                    images && <Carousel
+                                    product.images && <Carousel
                                         autoPlay={true}
                                         infinite={true}
                                         responsive={responsive}
                                         transitionDuration={500}
                                     >
                                         {
-                                            images.map((img, i) => {
+                                            product.images.map((img, i) => {
                                                 return (
                                                     <div key={i} onClick={() => setImage(img)}>
                                                         <img className="h-[120px] cursor-pointer"
-                                                            src={`http://localhost:3000/images/products/${img}.webp`} alt="pictures" />
+                                                            src={img} alt="pictures" />
                                                     </div>
                                                 )
                                             })
@@ -132,7 +236,7 @@ const Details = () => {
 
                         <div className="flex flex-col gap-5">
                             <div className="text-3xl text-slate-600 font-bold">
-                                <h3>Product Name</h3>
+                                <h3>{product.name}</h3>
                             </div>
 
                             <div className="flex justify-start items-center gap-4">
@@ -144,44 +248,42 @@ const Details = () => {
 
                             <div className="text-2xl text-red-500 font-bold flex gap-3">
                                 {
-                                    discount !== 0 ? <>
-                                        Price : <h2 className="line-through">₹456</h2>
-                                        <h2 className="text-green-500">₹{456 - Math.floor((456 * discount) / 100)} (-{discount}%)</h2>
-                                    </> : <h2>Price : ₹756</h2>
+                                    product.discount !== 0 ? <>
+                                        Price : <h2 className="line-through">₹{product.price}</h2>
+                                        <h2 className="text-green-500">₹{product.price - Math.floor((product.price * product.discount) / 100)} (-{product.discount}%)</h2>
+                                    </> : <h2>Price : ₹{product.price}</h2>
                                 }
                             </div>
 
                             <div className="text-slate-600">
-                                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ratione ut odio sint magnam
-                                    nisi, nam quo quas inventore at? Voluptates repellat blanditiis, libero a nemo accusamus
-                                    molestiae molestias ut possimus?</p>
+                                <p>{product.description?.substring(0, 230)}{'....'}</p>
                             </div>
 
                             <div className="flex gap-3 pb-10 border-b">
                                 {
-                                    stock ? <>
+                                    product.stock ? <>
                                         <div className="flex bg-slate-200 h-[50px] justify-center items-center
                                     text-xl">
-                                            <div className="px-6 cursor-pointer">
+                                            <div onClick={dec} className="px-6 cursor-pointer">
                                                 -
                                             </div>
                                             <div className="px-6">
-                                                2
+                                                {quantity}
                                             </div>
-                                            <div className="px-6 cursor-pointer">
+                                            <div onClick={inc} className="px-6 cursor-pointer">
                                                 +
                                             </div>
                                         </div>
 
                                         <div>
-                                            <button className="px-8 py-3 h-[50px] cursor-pointer text-white
+                                            <button onClick={add_cart} className="px-8 py-3 h-[50px] cursor-pointer text-white
                                         hover:shadow-lg hover:shadow-green-500/40 bg-[#059473]">Add to Cart</button>
                                         </div>
                                     </> : ""
                                 }
 
                                 <div>
-                                    <div className="h-[50px] w-[50px] flex justify-center items-center
+                                    <div onClick={add_wishlist} className="h-[50px] w-[50px] flex justify-center items-center
                                     cursor-pointer hover:shadow-lg hover:shadow-cyan-500/40 bg-cyan-500 text-white">
                                         <FaHeart />
                                     </div>
@@ -190,16 +292,16 @@ const Details = () => {
 
 
                             <div className="flex py-5 gap-5">
-                                <div className="w-[150px] text-black font-bold text-xl flex flex-col gap-5">
+                                <div className="w-[160px] text-black font-bold text-xl flex flex-col gap-5">
                                     <span>
                                         Availability
                                     </span>
-                                    <span className="flex items-center gap-1">Share Link <MdIosShare /></span>
+                                    <span className="flex items-center gap-1">Share Product<MdIosShare /></span>
                                 </div>
 
                                 <div className="flex flex-col gap-5">
-                                    <span className={`text-${stock ? 'green' : 'red'}-500`}>
-                                        {stock ? `In Stock(${stock})` : 'Out Of Stock'}
+                                    <span className={`text-${product.stock ? 'green' : 'red'}-500`}>
+                                        {product.stock ? `In Stock(${product.stock})` : 'Out Of Stock'}
                                     </span>
 
                                     <ul className="flex justify-start items-center gap-3">
@@ -234,7 +336,7 @@ const Details = () => {
 
                             <div className="flex gap-3">
                                 {
-                                    stock ? <button className="px-8 py-3 h-[50px] cursor-pointer
+                                    product.stock ? <button onClick={buynow} className="px-8 py-3 h-[50px] cursor-pointer
                                     hover:shadow-lg hover:shadow-green-500/40 bg-[#247462] text-white">
                                         Buy Now
                                     </button> : ""
@@ -270,8 +372,7 @@ const Details = () => {
                                 <div>
                                     {
                                         state === 'reviews' ? <Reviews /> : <p className="py-5 text-slate-600">
-                                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Impedit dicta aliquam ab repudiandae voluptatum vel consequuntur, enim aspernatur
-                                            minus dolor hic cumque reiciendis saepe omnis consectetur delectus officiis, repellat veniam.
+                                            {product.description}
                                         </p>
                                     }
                                 </div>
@@ -285,30 +386,30 @@ const Details = () => {
                                 </div>
                                 <div className="flex flex-col gap-5 mt-3 border p-3">
                                     {
-                                        [1, 2, 3].map((p, i) => {
+                                        moreProducts.map((p, i) => {
                                             return (
                                                 <Link className="block">
                                                     <div className="relative h-[270px]">
                                                         <img className="w-full h-full" src={
-                                                            `http://localhost:3000/images/products/${p}.webp`
+                                                            p.images[0]
                                                         } alt="product-image" />
                                                         {
-                                                            discount !== 0 && <div className="flex justify-center items-center absolute
+                                                            p.discount !== 0 && <div className="flex justify-center items-center absolute
                                                             text-white w-[38px] h-[38px] rounded-full bg-red-500 font-semibold text-xs left-2
                                                             top-2">
-                                                                {discount}%
+                                                                {p.discount}%
                                                             </div>
                                                         }
                                                     </div>
                                                     <h2 className="text-slate-600 py-1 font-bold">
-                                                        Product Name
+                                                        {p.name}
                                                     </h2>
                                                     <div className="flex gap-2">
                                                         <h2 className="text-lg font-bold text-salte-600">
-                                                            ₹4567
+                                                            ₹{p.price}
                                                         </h2>
                                                         <div className="flex items-center gap-2">
-                                                            <Rating ratings={4.5} />
+                                                            <Rating ratings={p.rating} />
                                                         </div>
                                                     </div>
                                                 </Link>
@@ -351,7 +452,7 @@ const Details = () => {
                         >
 
                             {
-                                [1, 2, 3, 4, 5, 6].map((p, i) => {
+                                relatedProducts.map((p, i) => {
                                     return (
                                         <SwiperSlide key={i}>
                                             <Link className="block">
@@ -359,7 +460,7 @@ const Details = () => {
                                                 <div className="relative h-[270px]">
                                                     <div className="w-full h-full">
                                                     <img className="w-full h-full" src={
-                                                        `http://localhost:3000/images/products/${p}.webp`
+                                                       p.images[0]
                                                     } alt="product-image" />
 
                                                     <div className="absolute h-full w-full top-0 left-0 bg-[#000]
@@ -369,24 +470,24 @@ const Details = () => {
                                                     </div>
                                                     
                                                     {
-                                                        discount !== 0 && <div className="flex justify-center items-center absolute
+                                                        p.discount !== 0 && <div className="flex justify-center items-center absolute
                                                             text-white w-[38px] h-[38px] rounded-full bg-red-500 font-semibold text-xs left-2
                                                             top-2">
-                                                            {discount}%
+                                                            {p.discount}%
                                                         </div>
                                                     }
                                                 </div>
 
                                                 <div className="p-4 flex flex-col gap-1">
                                                 <h2 className="text-slate-600 text-lg font-bold">
-                                                        Product Name
+                                                        {p.name}
                                                     </h2>
                                                     <div className="flex justify-start items-center gap-3">
                                                         <h2 className="text-lg font-bold text-slate-600">
-                                                            ₹4567
+                                                            ₹{p.price}
                                                         </h2>
                                                         <div className="flex">
-                                                            <Rating ratings={4.5} />
+                                                            <Rating ratings={p.rating} />
                                                         </div>
                                                         </div>
                                                 </div>
